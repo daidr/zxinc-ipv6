@@ -1,0 +1,33 @@
+{
+  "dependencies": {
+    "ip-address": "^8.1.0"
+  },
+  "name": "zxinc-ipv6",
+  "version": "0.0.1",
+  "description": "A module for indexing ipv6 geolocation using the zxinc database",
+  "main": "findipv6.js",
+  "devDependencies": {
+    "mocha": "^9.1.3"
+  },
+  "engines": {
+    "node": ">= 8.0.0"
+  },
+  "scripts": {
+    "test": "mocha \"test/**/*.js\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daidr/zxinc-ipv6.git"
+  },
+  "keywords": [
+    "ipv6",
+    "geolocation",
+    "zxinc"
+  ],
+  "author": "daidr <daidr@daidr.me>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/daidr/zxinc-ipv6/issues"
+  },
+  "homepage": "https://github.com/daidr/zxinc-ipv6#readme"
+}
