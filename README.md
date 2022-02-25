@@ -20,7 +20,7 @@ yarn add zxinc-ipv6
 ```javascript
 const IPDBv6 = require('zxinc-ipv6');
 
-//let db = new IPDBv6("/yourpath/ipv6wry.db");
+//let db = new IPDBv6(path.join(__dirname, "./yourpath/ipv6wry.db"));
 let db = new IPDBv6();
 
 console.log(db.getIPAddr("240e:473:fb40:2733::"));

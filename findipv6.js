@@ -1,4 +1,5 @@
 const fs = require("fs");
+const path = require("path");
 const Address6 = require('ip-address').Address6;
 
 function inet_ntoa(number) {
@@ -22,10 +23,10 @@ function inet_ntoa6(number) {
 
 
 class IPDBv6 {
-    constructor(dbname = "ipv6wry.db") {
+    constructor(dbname = path.join(__dirname, "ipv6wry.db")) {
 
         this.dbname = dbname;
-        this.img = fs.readFileSync("./ipv6wry.db");
+        this.img = fs.readFileSync(this.dbname);
 
         if (this.img.slice(0, 4).toString() != "IPDB") {
             // 数据库格式错误
