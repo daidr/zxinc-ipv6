@@ -18,13 +18,15 @@ function inet_ntoa6(number) {
     addresslist.push((number >> 32n) & 0xffffn);
     addresslist.push((number >> 16n) & 0xffffn);
     addresslist.push(number & 0xffffn);
-    return addresslist.map(e => e.toString(16).padStart(4, '0').toUpperCase()).join(":") + "::";
+    return (
+        addresslist
+            .map((e) => e.toString(16).padStart(4, "0").toUpperCase())
+            .join(":") + "::"
+    );
 }
-
 
 class IPDBv6 {
     constructor(dbname = path.join(__dirname, "ipv6wry.db")) {
-
         this.dbname = dbname;
         this.img = fs.readFileSync(this.dbname);
 
@@ -50,7 +52,7 @@ class IPDBv6 {
         let gb_str = this.img.slice(Number(offset), o2);
         let utf8_str;
         try {
-            utf8_str = gb_str.toString("utf-8")
+            utf8_str = gb_str.toString("utf-8");
         } catch (error) {
             return "未知数据";
         }
@@ -75,8 +77,7 @@ class IPDBv6 {
         if (byte == 1n || byte == 2n) {
             let p = this.getLong8(offset + 1n, this.offlen);
             return this.getAreaAddr(p);
-        }
-        else {
+        } else {
             return this.getString(offset);
         }
     }
@@ -88,15 +89,13 @@ class IPDBv6 {
             // [IP][0x01][国家和地区信息的绝对偏移地址]
             // 使用接下来的3字节作为偏移量调用字节取得信息
             return this.getAddr(this.getLong8(o + 1n, this.offlen));
-        }
-        else {
+        } else {
             // 重定向模式2 + 正常模式
             // [IP][0x02][信息的绝对偏移][...]
             let cArea = this.getAreaAddr(o);
             if (byte == 2n) {
                 o += 1n + this.offlen;
-            }
-            else {
+            } else {
                 o = BigInt(this.img.indexOf(0, Number(o)) + 1);
             }
             let aArea = this.getAreaAddr(o);
@@ -108,34 +107,47 @@ class IPDBv6 {
         if (r - l <= 1n) {
             return l;
         }
-        let m = ((l + r) / 2n);
+        let m = (l + r) / 2n;
 
         let o = this.firstIndex + m * (8n + this.offlen);
 
         let new_ip = this.getLong8(o);
         if (ip < new_ip) {
             return this.find(ip, l, m);
-        }
-        else {
+        } else {
             return this.find(ip, m, r);
         }
     }
 
     getIPAddr(ip) {
-        let ip_off, ip_rec_off, ip6, c, a, i1, i2, cc, aa, i, type = "normal";
-        let realip, realipstr,
-            serverip, serveripstr, notIPV6 = false, ipv4;
+        let ip_off,
+            ip_rec_off,
+            ip6,
+            c,
+            a,
+            i1,
+            i2,
+            cc,
+            aa,
+            i,
+            type = "normal";
+        let realip,
+            realipstr,
+            serverip,
+            serveripstr,
+            notIPV6 = false,
+            ipv4;
         try {
             // 把IP地址转成数字
             ip6 = Ipv6ToBigInt(ip);
-            ip6 = (ip6 >> 64n) & 0xFFFFFFFFFFFFFFFFn;
+            ip = (ip6 >> 64n) & 0xffffffffffffffffn;
             // 使用 this.find 函数查找ip的索引偏移
-            i = this.find(ip6, 0n, this.indexCount);
+            i = this.find(ip, 0n, this.indexCount);
             // 得到索引记录
             ip_off = this.firstIndex + i * (8n + this.offlen);
             ip_rec_off = this.getLong8(ip_off + 8n, this.offlen);
-            [c, a] = (this.getAddr(ip_rec_off));
-            [cc, aa] = ([c, a]);
+            [c, a] = this.getAddr(ip_rec_off);
+            [cc, aa] = [c, a];
             i1 = inet_ntoa6(this.getLong8(ip_off));
             try {
                 i2 = inet_ntoa6(this.getLong8(ip_off + 8n + this.offlen) - 1n);
@@ -150,8 +162,9 @@ class IPDBv6 {
                 notIPV6 = true;
                 ipv4 = "127.0.0.1";
                 type = "local";
-            } else if (ip6 == 0n && (ip6 >> 32n & 0xFFFFFFFFn) == 0xFFFFn) {  // IPv4映射地址
-                realip = (ip6 & 0xFFFFFFFFn);
+            } else if (ip == 0n && ((ip6 >> 32n) & 0xffffffffn) == 0xffffn) {
+                // IPv4映射地址
+                realip = ip6 & 0xffffffffn;
                 realipstr = inet_ntoa(realip);
                 i1 = "0:0:0:0:0:FFFF:0:0";
                 i2 = "0:0:0:0:0:FFFF:FFFF:FFFF";
@@ -160,26 +173,28 @@ class IPDBv6 {
                 ipv4 = realipstr;
                 notIPV6 = true;
                 type = "ipv4";
-            } else if ((ip6 >> 48n & 0xFFFFn) == 0x2002n) {		// 6to4
-                realip = (ip6 & 0x0000FFFFFFFF0000n) >> 16n;
+            } else if (((ip >> 48n) & 0xffffn) == 0x2002n) {
+                // 6to4
+                realip = (ip & 0x0000ffffffff0000n) >> 16n;
                 realipstr = inet_ntoa(realip);
                 a = a + "6to4，对应的IPv4地址为" + realipstr;
                 ipv4 = realipstr;
                 notIPV6 = true;
                 type = "6to4";
-            } else if ((ip6 >> 32n & 0xFFFFFFFFn) == 0x20010000n) {  // teredo
-                serverip = (ip6 & 0xFFFFFFFFn);
+            } else if (((ip >> 32n) & 0xffffffffn) == 0x20010000n) {
+                // teredo
+                serverip = ip & 0xffffffffn;
                 serveripstr = inet_ntoa(serverip);
-                realip = (~ip6 & 0xFFFFFFFFn);
+                realip = ~ip6 & 0xffffffffn;
                 realipstr = inet_ntoa(realip);
                 a = a + "Teredo服务器的IPv4地址为" + serveripstr + "\n";
                 a = a + "客户端真实的IPv4地址为" + realipstr;
                 ipv4 = realipstr;
                 notIPV6 = true;
                 type = "teredo";
-
-            } else if ((ip6 >> 32n & 0xFFFFFFFFn) == 0x5EFEn) {		// isatap
-                realip = (ip6 & 0xFFFFFFFFn);
+            } else if (((ip6 >> 32n) & 0xffffffffn) == 0x5efen) {
+                // isatap
+                realip = ip6 & 0xffffffffn;
                 realipstr = inet_ntoa(realip);
                 a = a + "ISATAP地址，对应的IPv4地址为" + realipstr;
                 ipv4 = realipstr;
@@ -197,7 +212,7 @@ class IPDBv6 {
             myip: ip,
             ip: {
                 start: i1,
-                end: i2
+                end: i2,
             },
             location: c + " " + a,
             country: cc,
@@ -205,7 +220,7 @@ class IPDBv6 {
             type: type,
             isNormalIPv6: !notIPV6,
             ipv4: ipv4,
-            serveripv4: serveripstr
+            serveripv4: serveripstr,
         };
         return data;
     }
@@ -214,6 +229,6 @@ class IPDBv6 {
 function Ipv6ToBigInt(ipv6str) {
     let address = new Address6(ipv6str);
     return BigInt(address.bigInteger());
-};
+}
 
 exports = module.exports = IPDBv6;
