@@ -70,8 +70,8 @@ describe('IPV6 test', function () {
             assert.equal(data.serveripv4, "65.54.227.120");
         });
 
-        it('ipv4 should be \'190.201.28.135\'', function () {
-            assert.equal(data.ipv4, "190.201.28.135");
+        it('ipv4 should be \'192.0.2.45\'', function () {
+            assert.equal(data.ipv4, "192.0.2.45");
         });
     });
 });

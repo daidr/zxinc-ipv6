@@ -127,14 +127,14 @@ class IPDBv6 {
         try {
             // 把IP地址转成数字
             ip6 = Ipv6ToBigInt(ip);
-            ip6 = (ip6 >> 64n) & 0xFFFFFFFFFFFFFFFFn;
+            ip = (ip6 >> 64n) & 0xFFFFFFFFFFFFFFFFn;
             // 使用 this.find 函数查找ip的索引偏移
-            i = this.find(ip6, 0n, this.indexCount);
+            i = this.find(ip, 0n, this.indexCount);
             // 得到索引记录
             ip_off = this.firstIndex + i * (8n + this.offlen);
             ip_rec_off = this.getLong8(ip_off + 8n, this.offlen);
-            [c, a] = (this.getAddr(ip_rec_off));
-            [cc, aa] = ([c, a]);
+            [c, a] = this.getAddr(ip_rec_off);
+            [cc, aa] = [c, a];
             i1 = inet_ntoa6(this.getLong8(ip_off));
             try {
                 i2 = inet_ntoa6(this.getLong8(ip_off + 8n + this.offlen) - 1n);
@@ -149,8 +149,9 @@ class IPDBv6 {
                 notIPV6 = true;
                 ipv4 = "127.0.0.1";
                 type = "local";
-            } else if (ip6 == 0n && (ip6 >> 32n & 0xFFFFFFFFn) == 0xFFFFn) {  // IPv4映射地址
-                realip = (ip6 & 0xFFFFFFFFn);
+            } else if (ip == 0n && ((ip6 >> 32n) & 0xffffffffn) == 0xffffn) {
+                // IPv4映射地址
+                realip = ip6 & 0xffffffffn;
                 realipstr = inet_ntoa(realip);
                 i1 = "0:0:0:0:0:FFFF:0:0";
                 i2 = "0:0:0:0:0:FFFF:FFFF:FFFF";
@@ -159,26 +160,28 @@ class IPDBv6 {
                 ipv4 = realipstr;
                 notIPV6 = true;
                 type = "ipv4";
-            } else if ((ip6 >> 48n & 0xFFFFn) == 0x2002n) {		// 6to4
-                realip = (ip6 & 0x0000FFFFFFFF0000n) >> 16n;
+            } else if (((ip >> 48n) & 0xffffn) == 0x2002n) {
+                // 6to4
+                realip = (ip & 0x0000ffffffff0000n) >> 16n;
                 realipstr = inet_ntoa(realip);
                 a = a + "6to4，对应的IPv4地址为" + realipstr;
                 ipv4 = realipstr;
                 notIPV6 = true;
                 type = "6to4";
-            } else if ((ip6 >> 32n & 0xFFFFFFFFn) == 0x20010000n) {  // teredo
-                serverip = (ip6 & 0xFFFFFFFFn);
+            } else if (((ip >> 32n) & 0xffffffffn) == 0x20010000n) {
+                // teredo
+                serverip = ip & 0xffffffffn;
                 serveripstr = inet_ntoa(serverip);
-                realip = (~ip6 & 0xFFFFFFFFn);
+                realip = ~ip6 & 0xffffffffn;
                 realipstr = inet_ntoa(realip);
                 a = a + "Teredo服务器的IPv4地址为" + serveripstr + "\n";
                 a = a + "客户端真实的IPv4地址为" + realipstr;
                 ipv4 = realipstr;
                 notIPV6 = true;
                 type = "teredo";
-
-            } else if ((ip6 >> 32n & 0xFFFFFFFFn) == 0x5EFEn) {		// isatap
-                realip = (ip6 & 0xFFFFFFFFn);
+            } else if (((ip6 >> 32n) & 0xffffffffn) == 0x5efen) {
+                // isatap
+                realip = ip6 & 0xffffffffn;
                 realipstr = inet_ntoa(realip);
                 a = a + "ISATAP地址，对应的IPv4地址为" + realipstr;
                 ipv4 = realipstr;
