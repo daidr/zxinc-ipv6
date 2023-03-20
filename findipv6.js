@@ -1,5 +1,5 @@
 const fs = require("fs");
-const Address6 = require('ip-address').Address6;
+const Address6 = require("ip-address").Address6;
 
 function inet_ntoa(number) {
     let addresslist = [];
@@ -17,13 +17,15 @@ function inet_ntoa6(number) {
     addresslist.push((number >> 32n) & 0xffffn);
     addresslist.push((number >> 16n) & 0xffffn);
     addresslist.push(number & 0xffffn);
-    return addresslist.map(e => e.toString(16).padStart(4, '0').toUpperCase()).join(":") + "::";
+    return (
+        addresslist
+            .map((e) => e.toString(16).padStart(4, "0").toUpperCase())
+            .join(":") + "::"
+    );
 }
-
 
 class IPDBv6 {
     constructor(dbname = "ipv6wry.db") {
-
         this.dbname = dbname;
         this.img = fs.readFileSync("./ipv6wry.db");
 
@@ -49,7 +51,7 @@ class IPDBv6 {
         let gb_str = this.img.slice(Number(offset), o2);
         let utf8_str;
         try {
-            utf8_str = gb_str.toString("utf-8")
+            utf8_str = gb_str.toString("utf-8");
         } catch (error) {
             return "未知数据";
         }
@@ -74,8 +76,7 @@ class IPDBv6 {
         if (byte == 1n || byte == 2n) {
             let p = this.getLong8(offset + 1n, this.offlen);
             return this.getAreaAddr(p);
-        }
-        else {
+        } else {
             return this.getString(offset);
         }
     }
@@ -87,15 +88,13 @@ class IPDBv6 {
             // [IP][0x01][国家和地区信息的绝对偏移地址]
             // 使用接下来的3字节作为偏移量调用字节取得信息
             return this.getAddr(this.getLong8(o + 1n, this.offlen));
-        }
-        else {
+        } else {
             // 重定向模式2 + 正常模式
             // [IP][0x02][信息的绝对偏移][...]
             let cArea = this.getAreaAddr(o);
             if (byte == 2n) {
                 o += 1n + this.offlen;
-            }
-            else {
+            } else {
                 o = BigInt(this.img.indexOf(0, Number(o)) + 1);
             }
             let aArea = this.getAreaAddr(o);
@@ -107,27 +106,40 @@ class IPDBv6 {
         if (r - l <= 1n) {
             return l;
         }
-        let m = ((l + r) / 2n);
+        let m = (l + r) / 2n;
 
         let o = this.firstIndex + m * (8n + this.offlen);
 
         let new_ip = this.getLong8(o);
         if (ip < new_ip) {
             return this.find(ip, l, m);
-        }
-        else {
+        } else {
             return this.find(ip, m, r);
         }
     }
 
     getIPAddr(ip) {
-        let ip_off, ip_rec_off, ip6, c, a, i1, i2, cc, aa, i, type = "normal";
-        let realip, realipstr,
-            serverip, serveripstr, notIPV6 = false, ipv4;
+        let ip_off,
+            ip_rec_off,
+            ip6,
+            c,
+            a,
+            i1,
+            i2,
+            cc,
+            aa,
+            i,
+            type = "normal";
+        let realip,
+            realipstr,
+            serverip,
+            serveripstr,
+            notIPV6 = false,
+            ipv4;
         try {
             // 把IP地址转成数字
             ip6 = Ipv6ToBigInt(ip);
-            ip = (ip6 >> 64n) & 0xFFFFFFFFFFFFFFFFn;
+            ip = (ip6 >> 64n) & 0xffffffffffffffffn;
             // 使用 this.find 函数查找ip的索引偏移
             i = this.find(ip, 0n, this.indexCount);
             // 得到索引记录
@@ -199,7 +211,7 @@ class IPDBv6 {
             myip: ip,
             ip: {
                 start: i1,
-                end: i2
+                end: i2,
             },
             location: c + " " + a,
             country: cc,
@@ -207,7 +219,7 @@ class IPDBv6 {
             type: type,
             isNormalIPv6: !notIPV6,
             ipv4: ipv4,
-            serveripv4: serveripstr
+            serveripv4: serveripstr,
         };
         return data;
     }
@@ -216,6 +228,6 @@ class IPDBv6 {
 function Ipv6ToBigInt(ipv6str) {
     let address = new Address6(ipv6str);
     return BigInt(address.bigInteger());
-};
+}
 
 exports = module.exports = IPDBv6;
